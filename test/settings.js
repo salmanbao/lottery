@@ -4,7 +4,7 @@ const { BigNumber } = require('bignumber.js')
 const lotto = {
   setup: {
     sizeOfLottery: 6,
-    maxValidRange: 20,
+    maxValidRange: 1000000,
     bucket: {
       one: 20,
       two: 50,
@@ -14,6 +14,7 @@ const lotto = {
       two: 4,
       three: 10,
     },
+    burnWallet: '0x0000000000000000000000000000000000000000',
   },
   update: {
     sizeOfLottery: 5,
@@ -29,10 +30,11 @@ const lotto = {
     },
   },
   newLotto: {
-    distribution: [2, 3, 5, 10, 20, 30],
+    distribution: [200, 300, 500, 1000, 2000, 3000],
     prize: ethers.utils.parseUnits('1000', 18),
-    cost: ethers.utils.parseUnits('3236528.42', 18), // 5$
+    cost: ethers.utils.parseUnits('4236528', 18), // 5$
     closeIncrease: 10000,
+    treasuryFee: 1000,
     endIncrease: 20000,
     win: {
       blankWinningNumbers: '0,0,0,0,0,0',
@@ -62,13 +64,13 @@ const lotto = {
     linksToLotto: ethers.utils.parseUnits('99999999900000', 18),
     cake: ethers.utils.parseUnits('100000000000000', 18),
     one: {
-      cost: '3236528420000000000000000',
+      cost: '4194162720000000000000000',
     },
     ten: {
-      cost: '32365284200000000000000000',
+      cost: '41941627200000000000000000',
     },
     fifty: {
-      cost: '161826421000000000000000000',
+      cost: '211826400000000000000000000',
     },
     max: {
       cost: '560000000000000000000',
@@ -99,7 +101,7 @@ const lotto = {
   },
   errorData: {
     distribution_length: [5, 10, 15, 20, 10],
-    distribution_total: [5, 10, 15, 5, 5, 20],
+    distribution_total: [500, 1000, 1500, 500, 500, 2000],
     prize: ethers.utils.parseUnits('0', 18),
     cost: ethers.utils.parseUnits('0', 18),
     startTime: ethers.utils.parseUnits('0', 18),
@@ -107,9 +109,10 @@ const lotto = {
     bucket: 0,
   },
   errors: {
+    invalid_operator: 'Not operator',
     invalid_admin: 'Ownable: caller is not the owner',
     invalid_distribution_length: 'Invalid distribution',
-    invalid_distribution_total: 'Prize distribution is not 70%',
+    invalid_distribution_total: 'Rewards must equal 7000',
     invalid_price_or_cost: 'Prize or cost cannot be 0',
     invalid_timestamp: 'Timestamps for lottery invalid',
     invalid_mint_timestamp: 'Invalid time for mint',
@@ -139,9 +142,8 @@ function generateLottoNumbers({ numberOfTickets, lottoSize, maxRange }) {
   let counterForNumbers = 0
   for (let i = 0; i < numberOfTickets; i++) {
     for (let j = 0; j < lottoSize; j++) {
-      numberOfNumbers[counterForNumbers] = Math.floor(
-        Math.random() * maxRange + 1,
-      )
+      numberOfNumbers[counterForNumbers] =
+        1000000 + Math.floor(Math.random() * maxRange + 1)
       counterForNumbers += 1
     }
   }

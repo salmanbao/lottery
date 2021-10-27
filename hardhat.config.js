@@ -1,11 +1,33 @@
+require('@nomiclabs/hardhat-etherscan')
 require('@nomiclabs/hardhat-waffle')
 require('@nomiclabs/hardhat-ethers')
 require('hardhat-gas-reporter')
 require('solidity-coverage')
+require('hardhat-watcher')
 /**
  * @type import('hardhat/config').HardhatUserConfig
  */
 module.exports = {
+  watcher: {
+    compilation: {
+      tasks: ['compile'],
+    },
+    test: {
+      tasks: [
+        {
+          command: 'test',
+          params: {
+            logs: true,
+            noCompile: false,
+            testFiles: ['./test/system.test.js'],
+          },
+        },
+      ],
+      files: ['./test/*'],
+      verbose: true,
+    },
+  },
+
   gasReporter: {
     enabled: true,
     currency: 'CHF',
@@ -20,6 +42,20 @@ module.exports = {
       blockGasLimit: 13000000,
       gasPrice: 20,
     },
+    bsc: {
+      accounts: {
+        mnemonic:
+          'differ valley cliff whale heavy video grocery host nerve anger noodle deny',
+      },
+      url: 'https://data-seed-prebsc-1-s2.binance.org:8545/',
+      chainId: 97,
+      gasPrice: 'auto',
+    },
+  },
+  etherscan: {
+    // Your API key for Etherscan
+    // Obtain one at https://etherscan.io/
+    apiKey: 'QM92UXPPM2ITZG1UBG3FR5W4JUHQKNQ5ZS',
   },
   solidity: {
     compilers: [
@@ -42,7 +78,16 @@ module.exports = {
         },
       },
       {
-        version: '0.7.3',
+        version: '0.8.4',
+        settings: {
+          optimizer: {
+            enabled: true,
+            runs: 200,
+          },
+        },
+      },
+      {
+        version: '0.8.0',
         settings: {
           optimizer: {
             enabled: true,
