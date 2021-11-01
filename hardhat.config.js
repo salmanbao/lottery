@@ -44,8 +44,7 @@ module.exports = {
     },
     bsc: {
       accounts: {
-        mnemonic:
-          'differ valley cliff whale heavy video grocery host nerve anger noodle deny',
+        mnemonic: process.env.MNEMONIC,
       },
       url: 'https://data-seed-prebsc-1-s2.binance.org:8545/',
       chainId: 97,

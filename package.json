@@ -8,7 +8,8 @@
     "clean": "rm -rf artifacts && rm -rf cache && rm -rf coverage && rm -rf coverage.json && rm -rf .solcover.js && rm -rf yarn.lock",
     "cover": "npx hardhat coverage",
     "flatten": "hardhat flatten ./contracts/SafemoonLottery.sol > ./Safemoon.sol",
-    "verify": "hardhat verify --constructor-args scripts/params.js 0xEC47f22E8165F763F558588e29e0Ac23A3AB965a --network bsc",
+    "verify": "hardhat verify --constructor-args scripts/params.js 0xeA7556dD96Abd76215d0A74D36Ae58687013B06D --network bsc",
+    "verify:rng": "hardhat verify --constructor-args scripts/rng.js 0x026D2cADa52aDAc907de2aA51d1e59D7b7AD2cfb --network bsc",
     "deploy:local": "hardhat run scripts/deploy.js --network"
   },
   "dependencies": {

@@ -25,7 +25,6 @@ contract SafemoonLottery is ReentrancyGuard, ISafemoonLottery, Ownable {
 
     address public treasuryAddress;
     address public fundingWallet;
-    address public burnWallet_;
 
     uint256 public currentLotteryId;
     uint256 public currentTicketId;
@@ -39,8 +38,8 @@ contract SafemoonLottery is ReentrancyGuard, ISafemoonLottery, Ownable {
 
     uint256 public constant MIN_LENGTH_LOTTERY = 4 hours - 5 minutes; // 4 hours
     uint256 public constant MAX_LENGTH_LOTTERY = 4 days + 5 minutes; // 4 days
-    uint256 public constant MAX_TREASURY_FEE = 1000; // 10%
-    uint256 public constant MAX_BURN_FEE = 3000; // 30%
+    uint256 public constant MAX_TREASURY_FEE = 2500; // 25% burning fee
+    uint256 public constant MAX_FUNDING_FEE = 500; // 5% burning fee
 
     // Buckets for discounts (i.e bucketOneMax_ = 20, less than 20 tickets gets
     // discount)
@@ -111,7 +110,6 @@ contract SafemoonLottery is ReentrancyGuard, ISafemoonLottery, Ownable {
     }
 
     event AdminTokenRecovery(address token, uint256 amount);
-    event FundingWallet(uint256 indexed amount);
     event LotteryClose(uint256 indexed lotteryId, uint256 firstTicketIdNextLottery);
     event LotteryInjection(uint256 indexed lotteryId, uint256 injectedAmount);
     event LotteryOpen(
@@ -146,7 +144,6 @@ contract SafemoonLottery is ReentrancyGuard, ISafemoonLottery, Ownable {
     constructor(
         address _safemoonTokenAddress, 
         address _randomGeneratorAddress,
-        address _burnWallet,
         address _fundingWallet,
         uint8 _bucketOneMaxNumber,
         uint8 _bucketTwoMaxNumber,
@@ -185,7 +182,6 @@ contract SafemoonLottery is ReentrancyGuard, ISafemoonLottery, Ownable {
         );
         safemoonToken = IERC20(_safemoonTokenAddress);
         randomGenerator = IRandomNumberGenerator(_randomGeneratorAddress);
-        burnWallet_ = _burnWallet;
         fundingWallet = _fundingWallet;
 
         // Initializes a mapping
@@ -229,10 +225,8 @@ contract SafemoonLottery is ReentrancyGuard, ISafemoonLottery, Ownable {
         );
 
         // Transfer safemoon tokens to this contract
-        safemoonToken.safeTransferFrom(address(msg.sender), address(this), (amountSafemoonToTransfer * 9500) / 10000);
+        safemoonToken.safeTransferFrom(address(msg.sender), address(this), amountSafemoonToTransfer);
 
-        // 5% of sale will go to the funding wallet address
-        safemoonToken.transfer(fundingWallet, (amountSafemoonToTransfer *500) / 10000);
         // Increment the total amount collected for the lottery round
         _lotteries[_lotteryId].amountCollectedInSafemoon += amountSafemoonToTransfer;
         for (uint256 i = 0; i < _ticketNumbers.length; i++) {
@@ -254,7 +248,6 @@ contract SafemoonLottery is ReentrancyGuard, ISafemoonLottery, Ownable {
             // Increase lottery ticket number
             currentTicketId++;
         }
-        emit FundingWallet((amountSafemoonToTransfer *500) / 10000);
         emit TicketsPurchase(msg.sender, _lotteryId, _ticketNumbers.length);
     }
 
@@ -351,16 +344,17 @@ contract SafemoonLottery is ReentrancyGuard, ISafemoonLottery, Ownable {
         // Initialize a number to count addresses in the previous bracket
         uint256 numberAddressesInPreviousBracket;
 
-        // Calculate the amount to share post-treasury fee
+        // Calculate the amount to share post-treasury fee + post-funding
         uint256 amountToShareToWinners = (
-            ((_lotteries[_lotteryId].amountCollectedInSafemoon) * (10000 - _lotteries[_lotteryId].treasuryFee))
+            ((_lotteries[_lotteryId].amountCollectedInSafemoon) * (10000 - (_lotteries[_lotteryId].treasuryFee)))
         ) / 10000;
 
-        uint256 amountToBurnWallet = (
-            ((_lotteries[_lotteryId].amountCollectedInSafemoon) * MAX_BURN_FEE)
+        // Calculate the amount to share post-funding fee
+        uint256 amountToShareToFundingWallet = (
+            ((_lotteries[_lotteryId].amountCollectedInSafemoon) * (10000 - MAX_FUNDING_FEE))
         ) / 10000;
 
-        amountToShareToWinners = amountToShareToWinners - amountToBurnWallet;
+        uint256 amountTofundingWallet = _lotteries[_lotteryId].amountCollectedInSafemoon - amountToShareToFundingWallet;
 
         // Initializes the amount to withdraw to treasury
         uint256 amountToWithdrawToTreasury;
@@ -382,7 +376,7 @@ contract SafemoonLottery is ReentrancyGuard, ISafemoonLottery, Ownable {
                 // B. If rewards at this bracket are > 0, calculate, else, report the numberAddresses from previous bracket
                 if (_lotteries[_lotteryId].rewardsBreakdown[j] != 0) {
                     _lotteries[_lotteryId].safemoonPerBracket[j] =
-                        ((_lotteries[_lotteryId].rewardsBreakdown[j] * amountToShareToWinners) /
+                        ((_lotteries[_lotteryId].rewardsBreakdown[j] * _lotteries[_lotteryId].amountCollectedInSafemoon) /
                             (_numberTicketsPerLotteryId[_lotteryId][transformedWinningNumber] -
                                 numberAddressesInPreviousBracket)) /
                         10000;
@@ -395,7 +389,7 @@ contract SafemoonLottery is ReentrancyGuard, ISafemoonLottery, Ownable {
                 _lotteries[_lotteryId].safemoonPerBracket[j] = 0;
 
                 amountToWithdrawToTreasury +=
-                    (_lotteries[_lotteryId].rewardsBreakdown[j] * amountToShareToWinners) /
+                    (_lotteries[_lotteryId].rewardsBreakdown[j] * _lotteries[_lotteryId].amountCollectedInSafemoon) /
                     10000;
             }
         }
@@ -410,10 +404,11 @@ contract SafemoonLottery is ReentrancyGuard, ISafemoonLottery, Ownable {
         }
 
         amountToWithdrawToTreasury += (_lotteries[_lotteryId].amountCollectedInSafemoon - amountToShareToWinners);
-
+        
         // Transfer SAFEMOON to treasury address
         safemoonToken.safeTransfer(treasuryAddress, amountToWithdrawToTreasury);
-        safemoonToken.safeTransfer(burnWallet_, amountToBurnWallet);
+        // Transfer SAFEMOON to funding address
+        safemoonToken.safeTransfer(fundingWallet, amountTofundingWallet);
 
         emit LotteryNumberDrawn(currentLotteryId, finalNumber, numberAddressesInPreviousBracket);
     }

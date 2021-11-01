@@ -32,26 +32,24 @@ const main = async () => {
 
   // Getting the lottery code (abi, bytecode, name)
   lotteryContract = await ethers.getContractFactory('SafemoonLottery')
+  // randGenContract = await ethers.getContractFactory('RandomNumberGenerator')
 
   // Deploys the contracts
 
   lotteryInstance = await lotteryContract.deploy(
-    '0x71b894957fe11f7d94d0d91cfef74735ce21a534',
-    '0x8daea24533cffedd499e0c649ce309db54d042cf',
-    '0x65518dc6f9c6ef29afad2b1bec8f9174b5b629b6',
-    '0x65518dc6f9c6ef29afad2b1bec8f9174b5b629b6',
+    '0xAa43A2bEb083CB2829CBA963400324Ce70880A03',
+    '0x026D2cADa52aDAc907de2aA51d1e59D7b7AD2cfb',
+    '0x73326B37374607A826F6a0aBBe47992061495b83',
     20,
     50,
     1,
     4,
     10,
   )
+
   // randGenInstance = await randGenContract.deploy(
-  //   mock_vrfCoordInstance.address,
-  //   linkInstance.address,
-  //   lotteryInstance.address,
-  //   lotto.chainLink.keyHash,
-  //   lotto.chainLink.fee,
+  //   '0xa555fC018435bef5A13C6c6870a9d4C11DEC329C',
+  //   '84b9b910527ad5c03a9ca831909e21e236ea7b06',
   // )
 
   // // Final set up of contracts
@@ -65,6 +63,11 @@ const main = async () => {
     Label: 'Deployed Lottery Address',
     Info: lotteryInstance.address,
   }
+
+  // var lotteryLog = {
+  //   Label: 'Deployed RNG Address',
+  //   Info: randGenInstance.address,
+  // }
 
   console.table([lotteryLog])
 }
